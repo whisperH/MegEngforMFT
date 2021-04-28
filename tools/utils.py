@@ -66,24 +66,7 @@ def get_config_info(config):
     return config_table
 
 
-def save_track_info(frameNo, bbox, identities=None):
-    cur_frame_track_info = []
-    for i, box in enumerate(bbox):
-        id = int(identities[i]) if identities is not None else 0
-        x1, y1, x2, y2 = [int(i) for i in box]
 
-        cur_frame_track_info.append({
-            'frameNo': frameNo,
-            'trackid': id,
-            'boxesX1': x1,
-            'boxesY1': y1,
-            'boxesX2': x2,
-            'boxesY2': y2,
-            'conf': 0,
-            'cat': 1,
-            'iscrowd': 0,
-        })
-    return cur_frame_track_info
 
 class GroupedRandomSampler(RandomSampler):
     def __init__(

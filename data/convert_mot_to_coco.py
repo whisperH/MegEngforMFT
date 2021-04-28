@@ -85,7 +85,7 @@ def gen_COCO_Anno(data_path, out_path):
                                  int(anns[i][0]) - 1 <= image_range[1]], np.float32)
             anns_out[:, 0] -= image_range[0]
             # 生成的单帧文件
-            gt_out = seq_path + '/gt/gt_{}.txt'.format(split)
+            gt_out = seq_path + '/gt/gt_1_{}.txt'.format(split)
             fout = open(gt_out, 'w')
             for o in anns_out:
                 fout.write(

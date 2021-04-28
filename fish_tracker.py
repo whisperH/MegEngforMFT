@@ -4,7 +4,6 @@ import megengine as mge
 import os
 import cv2
 import numpy as np
-from tools.utils import save_track_info
 import pandas as pd
 import json
 
@@ -39,22 +38,41 @@ class FishTracking(object):
         self.tracker = self.initTracker(
             tracker_weight=self.tracker_weight
         )
-        # 记录整段视频轨迹信息的数组
-        self.all_track_info = []
+
         # 是否展示数据
         self.showRes = showRes
 
     def initTrackInfo(self, iframe_no):
         return [{
-            'frame_id': iframe_no,
-            'track_id': -1,
+            'frameNo': iframe_no,
+            'trackid': -1,
             'boxesX1': -1,
             'boxesY1': -1,
             'boxesX2': -1,
             'boxesY2': -1,
-            'centerX': -1,
-            'centerY': -1,
+            'conf': 0,
+            'cat': 1,
+            'iscrowd': 0,
         }]
+
+    def save_track_info(self, frameNo, bbox, identities=None):
+        cur_frame_track_info = []
+        for i, box in enumerate(bbox):
+            id = int(identities[i]) if identities is not None else 0
+            x1, y1, x2, y2 = [int(i) for i in box]
+
+            cur_frame_track_info.append({
+                'frameNo': frameNo,
+                'trackid': id,
+                'boxesX1': x1,
+                'boxesY1': y1,
+                'boxesX2': x2,
+                'boxesY2': y2,
+                'conf': 0,
+                'cat': 1,
+                'iscrowd': 0,
+            })
+        return cur_frame_track_info
 
     def initDetector(self):
         '''
@@ -96,6 +114,8 @@ class FishTracking(object):
 
 
     def multipleFishTracking(self, img_filenames):
+        # 记录整段视频轨迹信息的数组
+        all_track_info = []
         for idx, img_filename in enumerate(img_filenames):
             print("processing file:{0}".format(img_filename))
             # idx = int(img_filename.split("/")[-1].split(".")[0])
@@ -122,9 +142,10 @@ class FishTracking(object):
                 outputs = self.tracker.update(boxes)
                 bbox_xyxy = outputs[:, :4]
                 identities = outputs[:, -1]
-                cur_track_infos = save_track_info(idx, bbox_xyxy, identities)
+                # frame的编号从1 开始，idx需+1
+                cur_track_infos = self.save_track_info(idx+1, bbox_xyxy, identities)
             else:
-                cur_track_infos = self.initTrackInfo(idx)
+                cur_track_infos = self.initTrackInfo(idx+1)
 
             if self.showRes:
                 res_img = img.copy()
@@ -145,8 +166,8 @@ class FishTracking(object):
                     # 参数为(显示的图片名称，要显示的图片)  必须加上图片名称，不然会报错
                 cv2.imwrite('track_res_{}.png'.format(str(idx)), res_img)
 
-            self.all_track_info.extend(cur_track_infos)
-        return self.all_track_info
+            all_track_info.extend(cur_track_infos)
+        return all_track_info
 
 
 if __name__ == '__main__':
@@ -168,24 +189,21 @@ if __name__ == '__main__':
         # 不抽帧时跟踪结果的存储路径
         track_result_path = os.path.join(
             DATA_PATH, 'train',
-            idata['file_name'], 'gt', 'track_res.txt'
+            idata['file_name'], 'gt', 'track_1_val_half.txt'
         )
         image_file_list = idata['image_list']
         all_track_info = FishTracker.multipleFishTracking(image_file_list)
         if len(all_track_info) > 0:
             df = pd.DataFrame(all_track_info)
-            df.to_csv(track_result_path, index=False)
+            df.to_csv(track_result_path, index=False, header=False)
 
         # 抽5帧时跟踪结果的存储路径
         track5_result_path = os.path.join(
             DATA_PATH, 'train',
-            idata['file_name'], 'gt', 'track_5_res.txt'
+            idata['file_name'], 'gt', 'track_5_val_half.txt'
         )
         image_5file_list = idata['image_5list']
         all_track_info = FishTracker.multipleFishTracking(image_5file_list)
         if len(all_track_info) > 0:
             df = pd.DataFrame(all_track_info)
-            df.to_csv(track5_result_path, index=False, header=0)
-
-
-
+            df.to_csv(track5_result_path, index=False, header=False)

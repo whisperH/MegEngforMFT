@@ -1,0 +1,6 @@
+.idea
+detector/log/
+tracker/log/
+*.txt
+*.json
+*.csv
