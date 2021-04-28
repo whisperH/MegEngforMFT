@@ -98,7 +98,7 @@ def gen_COCO_Anno(data_path, out_path):
             gt_out = seq_path + '/gt/gt_5_{}.txt'.format(split)
             fout = open(gt_out, 'w')
             for idx, o in enumerate(anns_out):
-                if idx % 5 == 0:
+                if o[0] % 5 == 0:
                     fout.write(
                         '{:d},{:d},{:d},{:d},{:d},{:d},{:d},{:d},{:.6f}\n'.format(
                             int(o[0]), int(o[1]), int(o[2]), int(o[3]), int(o[4]), int(o[5]),
