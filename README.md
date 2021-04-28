@@ -34,11 +34,12 @@
     |    |    |    |track1
     |    |    |    |      |img                        :图像文件夹
     |    |    |    |      |gt                         : gt.txt：MOT格式的标注数据
-                                                      : gt_train_half.txt：在该段数据中，用于训练的 MOT格式标注数据
-                                                      : gt_val_half.txt：在该段数据中，用于验证的 MOT格式标注数据
+                                                      : gt_1_train_half.txt：在该段数据中，用于训练的 MOT格式标注数据
+                                                      : gt_1_val_half.txt：在该段数据中，用于验证的 MOT格式标注数据
                                                       : gt_5_train_half.txt：在该段数据中，用于验证的 MOT格式标注数据 (在提供的标准数据中，为25帧/秒，该文件中抽取为 5帧/秒)
                                                       : gt_5_val_half.txt：在该段数据中，用于验证的 MOT格式标注数据   (在提供的标准数据中，为25帧/秒，该文件中抽取为 5帧/秒)
-                                                      
+                                                      : track_1_val_half.txt：fish_tracker 生成的MOT格式标注数据
+                                                      : track_5_val_half.txt：fish_tracker 生成的MOT格式标注数据 (在提供的标准数据中，为25帧/秒，该文件中抽取为 5帧/秒)                                                      
     |    |    |test                                   ：track 4,10 用于初赛测试数据。在step1中，测试结果需提交至平台，用于得分排名计算
     |    |    |    |track10|img                       : 图像文件夹
     |    |detector                                    ：目标检测器相关实现代码
@@ -48,6 +49,8 @@
     |    det_test.ipynb                               ：目标检测精度测试入口文件
     |    det_train.ipynb                              ：目标检测图片训练入口文件
     |    fish_tracker.ipynb                           ：鱼类多目标跟踪入口文件
+    |    tracker_eval.ipynb                           ：用于计算多目标跟踪评价指标的文件，
+                                                        最后返回结果不抽帧与抽5帧的调和平均得分。
     |    ipynb_importer.py                            ：在Jupyter平台中调用其他文件的函数
 ```
 ### 运行步骤
@@ -59,3 +62,17 @@
 ```det_train.py```
 #### 4. MOT跟踪
 ```fish_tracker.py```
+#### 5. 跟踪指标计算
+```tracker_eval.py```
+调和平均比重：w_MOTA=1, w_IDF1=4
+
+gt:
+
+    original          dataset get scores: 2.002636991145807
+    selected-5-frames dataset get scores: 2.0
+    
+example:
+
+    original          dataset get scores: 1.596286314214157
+    selected-5-frames dataset get scores: 0.8543985845843052
+                                                            
