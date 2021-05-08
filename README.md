@@ -63,8 +63,19 @@
 #### 4. MOT跟踪
 ```fish_tracker.py```
 #### 5. 跟踪指标计算
-```tracker_eval.py```
-调和平均比重：w_MOTA=1, w_IDF1=4
+```python tracker_eval.py --track_result_path '/path/to/track_result_filepath --gt_path '/path/to/gt_filepath```
+
+```
+/path/to/
+    |->track_result_filepath 
+    |    |{seq_name}_track_s1_test_no1.txt     ：模型跟踪结果（不抽帧的情况）
+    |    |{seq_name}_track_s5_test_no1.txt     ：模型跟踪结果（抽帧的情况）
+    |->gt_filepath
+    |    |{seq_name}_gt_s1_test+no1.txt        ：真值数据（不抽帧的情况）
+    |    |{seq_name}_gt_s5_test+no1.txt        ：真值数据（抽帧的情况）
+```
+
+调和平均比重：w_MOTA=1, w_IDF1=1
 
 gt:
 
