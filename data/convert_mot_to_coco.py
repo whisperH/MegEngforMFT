@@ -11,7 +11,7 @@ HALF_VIDEO = True
 CREATE_SPLITTED_ANN = True
 
 
-def gen_COCO_Anno(data_path, out_path):
+def gen_COCO_Anno(data_path, out_path, split):
     out = {'images': [], 'annotations': [],
            'categories': [{'id': 1, 'name': 'fish'}],
            'videos': []}
@@ -144,4 +144,4 @@ if __name__ == '__main__':
             os.makedirs(OUT_PATH)
 
         out_path = OUT_PATH + '/{}.json'.format(split)
-        gen_COCO_Anno(data_path, out_path)
+        gen_COCO_Anno(data_path, out_path, split)

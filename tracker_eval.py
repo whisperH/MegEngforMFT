@@ -5,26 +5,45 @@ import motmetrics as mm
 import numpy as np
 import pandas as pd
 
-PROJECT_PATH = os.path.abspath(os.path.dirname(__file__))
-DATA_PATH = os.path.join(PROJECT_PATH, 'data/')
+# PROJECT_PATH = os.path.abspath(os.path.dirname(__file__))
+# DATA_PATH = os.path.join(PROJECT_PATH, 'data/')
 
 
 class TrackEvaluator(object):
-    def __init__(self, data_type='track', maxDist=450, w_MOTA=1, w_IDF1=4):
+    def __init__(self, args, data_type='track', maxDist=450, w_MOTA=1, w_IDF1=1):
         self.maxDist = maxDist
+        self.data_path = args.data_path
+        self.dataset_type = args.dataset_type
+        self.track_result_path = args.track_result_path
+        self.gt_path = args.gt_path
+        if self.track_result_path is not None and self.gt_path is not None:
+            self.eval_datapath = self.getTrackDataPath(self.track_result_path, frame_fre='1')
+            self.gt_datapath = self.getTrackDataPath(self.gt_path, frame_fre='1')
 
-        self.gt_datapath = self.getEvalDataPath(
-            data_type='gt', eva_type='val_half', frame_fre='1'
-        )
-        self.eval_datapath = self.getEvalDataPath(
-            data_type=data_type, eva_type='val_half', frame_fre='1'
-        )
-        self.gt_5_datapath = self.getEvalDataPath(
-            data_type='gt', eva_type='val_half', frame_fre='5'
-        )
-        self.eval_5_datapath = self.getEvalDataPath(
-            data_type=data_type, eva_type='val_half', frame_fre='5'
-        )
+            self.eval_5_datapath = self.getTrackDataPath(self.track_result_path, frame_fre='5')
+            self.gt_5_datapath = self.getTrackDataPath(self.gt_path, frame_fre='5')
+
+        # else:
+        #     self.gt_datapath = self.getEvalDataPath(
+        #         data_path=args.data_path,
+        #         data_type='gt', eva_type='val_half',
+        #         frame_fre='1', dataset_type=self.dataset_type
+        #     )
+        #     self.eval_datapath = self.getEvalDataPath(
+        #         data_path=args.data_path,
+        #         data_type=data_type, eva_type='val_half',
+        #         frame_fre='1', dataset_type=self.dataset_type
+        #     )
+        #     self.gt_5_datapath = self.getEvalDataPath(
+        #         data_path=args.data_path,
+        #         data_type='gt', eva_type='val_half',
+        #         frame_fre='5', dataset_type=self.dataset_type
+        #     )
+        #     self.eval_5_datapath = self.getEvalDataPath(
+        #         data_path=args.data_path,
+        #         data_type=data_type, eva_type='val_half',
+        #         frame_fre='5', dataset_type=self.dataset_type
+        #     )
         self.w_MOTA = w_MOTA
         self.w_IDF1 = w_IDF1
 
@@ -33,10 +52,8 @@ class TrackEvaluator(object):
         :return:
         '''
         scores = []
-        scores_5 = []
-
-        for gt_, track_ in zip(self.gt_datapath, self.eval_datapath):
-            print("starting to evaluate:{}".format(track_))
+        for gt_, track_ in zip(sorted(self.gt_datapath), sorted(self.eval_datapath)):
+            print("starting to evaluate:{} - {}".format(gt_, track_))
             save_path = os.path.split(track_)[0]
             try:
                 score = self.MOT_Evaluation(gt_, track_, self.maxDist, save_path)
@@ -45,8 +62,9 @@ class TrackEvaluator(object):
                 score = 0
             scores.append(score)
 
-        for gt_, track_ in zip(self.gt_5_datapath, self.eval_5_datapath):
-            print("starting to evaluate:{}".format(track_))
+        scores_5 = []
+        for gt_, track_ in zip(sorted(self.gt_5_datapath), sorted(self.eval_5_datapath)):
+            print("starting to evaluate:{} - {}".format(gt_, track_))
 
             save_path = os.path.split(track_)[0]
             try:
@@ -58,26 +76,42 @@ class TrackEvaluator(object):
             scores_5.append(score)
         return scores, scores_5
 
-    def getEvalDataPath(self, eva_type, data_type='gt', frame_fre='5'):
-        '''
-        get data path needed to be evaluated
-        :param data_type: 'gt' or 'track'
-        :param eva_type: 'val_half' or 'test'
-        :param frame_fre: '': no selected-frame; '' select 5 frame each sub-dataset
-        :return: <list> evaluated data path
-        '''
+    def getTrackDataPath(self, datapath, frame_fre='1'):
         eval_datapath = []
-        seqs = os.listdir(
-            os.path.join(DATA_PATH, 'train')
+        files = os.listdir(
+            os.path.join(datapath)
         )
-        for seq in seqs:
-            eval_datapath.append(
-                os.path.join(
-                    DATA_PATH, 'train', seq, 'gt',
-                    '{}_{}_{}.txt'.format(data_type, frame_fre, eva_type)
+        for file in files:
+            if 's'+frame_fre in file:
+                eval_datapath.append(
+                    os.path.join(
+                        datapath,
+                        file
+                    )
                 )
-            )
         return eval_datapath
+
+    # def getEvalDataPath(self, data_path, eva_type, data_type='gt', frame_fre='5', dataset_type='preliminary'):
+    #     '''
+    #     get data path needed to be evaluated
+    #     :param dataset_type: 'intermediary' or 'preliminary'
+    #     :param data_type: 'gt' or 'track'
+    #     :param eva_type: 'val_half' or 'test'
+    #     :param frame_fre: '1': no selected-frame; '5' select 5 frame each sub-dataset
+    #     :return: <list> evaluated data path
+    #     '''
+    #     eval_datapath = []
+    #     seqs = os.listdir(
+    #         os.path.join(data_path, dataset_type)
+    #     )
+    #     for seq in seqs:
+    #         eval_datapath.append(
+    #             os.path.join(
+    #                 data_path, dataset_type, seq, 'gt',
+    #                 '{}_{}_{}.txt'.format(data_type, frame_fre, eva_type)
+    #             )
+    #         )
+    #     return eval_datapath
 
     def MOT_Evaluation(
             self, gt_filepath, track_filepath,
@@ -132,7 +166,7 @@ class TrackEvaluator(object):
         print("Amount of GT frames: {}\nAmount of det frames: {}\nSet of all frames: {}".format(len(gt_frames),
                                                                                                 len(det_frames),
                                                                                                 len(frames)))
-
+        assert len(gt_frames) == len(det_frames), 'missing some frames in det_files'
         acc = mm.MOTAccumulator(auto_id=False)
 
         for frame in frames:
@@ -442,10 +476,44 @@ class TestUnit():
         print("test for track input")
         self.trackInput()
 
+def make_parser():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--track_result_path",
+        default='/home/huangjinze/code/MegEngTrack/data/submit',
+        type=str, help="track_result filepath"
+    )
+    parser.add_argument(
+        "--gt_path",
+        default='/home/huangjinze/code/MegEngTrack/data/interal',
+        type=str, help="ground truth filepath"
+    )
+    parser.add_argument(
+        "--data_path",
+        default="/home/megstudio/workspace/data/",
+        type=str, help="submit filepath"
+    )
+    parser.add_argument(
+        "--dataset_type",
+        default="train",
+        type=str, help="'intermediary' or 'preliminary'"
+    )
+
+    return parser
 
 if __name__ == "__main__":
-    TestUnit().run()
-    # scores, scores_5 = TrackEvaluator(data_type='track').run()
-    # print('original dataset get scores:', np.mean(scores))
-    # print('selected-5-frames dataset get scores:', np.mean(scores_5))
+    '''
+    track_result_path: 参赛者上传的存储结果文件夹
+    '''
+    # TestUnit().run()
+    parser = make_parser()
+    args = parser.parse_args()
+    scores, scores_5 = TrackEvaluator(
+        args,
+        data_type='track'
+    ).run()
+    print('original dataset get scores:', scores)
+    print('original dataset get scores:', np.mean(scores))
+    print('selected-5-frames dataset get scores:', scores_5)
+    print('selected-5-frames dataset get scores:', np.mean(scores_5))
 

@@ -21,26 +21,12 @@ import numpy as np
 
 from megengine.data.dataset.vision.meta_vision import VisionDataset
 
-min_keypoints_per_image = 10
-
-
-def _count_visible_keypoints(anno):
-    return sum(sum(1 for v in ann["keypoints"][2::3] if v > 0) for ann in anno)
-
-
 def has_valid_annotation(anno, order):
     # if it"s empty, there is no annotation
     if len(anno) == 0:
         return False
     if "boxes" in order or "boxes_category" in order:
         if "bbox" not in anno[0]:
-            return False
-    if "keypoints" in order:
-        if "keypoints" not in anno[0]:
-            return False
-        # for keypoint detection tasks, only consider valid images those
-        # containing at least min_keypoints_per_image
-        if _count_visible_keypoints(anno) < min_keypoints_per_image:
             return False
     return True
 
@@ -54,9 +40,7 @@ class COCO(VisionDataset):
         "image",
         "boxes",
         "boxes_category",
-        "keypoints",
         # TODO: need to check
-        # "polygons",
         "info",
     )
 
@@ -150,19 +134,6 @@ class COCO(VisionDataset):
                 ]
                 boxes_category = np.array(boxes_category, dtype=np.int32)
                 target.append(boxes_category)
-            elif k == "keypoints":
-                keypoints = [obj["keypoints"] for obj in anno]
-                keypoints = np.array(keypoints, dtype=np.float32).reshape(
-                    -1, len(self.keypoint_names), 3
-                )
-                target.append(keypoints)
-            elif k == "polygons":
-                polygons = [obj["segmentation"] for obj in anno]
-                polygons = [
-                    [np.array(p, dtype=np.float32).reshape(-1, 2) for p in ps]
-                    for ps in polygons
-                ]
-                target.append(polygons)
             elif k == "info":
                 info = self.imgs[img_id]
                 info = [info["height"], info["width"], info["id"]]
@@ -188,22 +159,3 @@ class COCO(VisionDataset):
         "fish": 1
     }
 
-    keypoint_names = (
-        "nose",
-        "left_eye",
-        "right_eye",
-        "left_ear",
-        "right_ear",
-        "left_shoulder",
-        "right_shoulder",
-        "left_elbow",
-        "right_elbow",
-        "left_wrist",
-        "right_wrist",
-        "left_hip",
-        "right_hip",
-        "left_knee",
-        "right_knee",
-        "left_ankle",
-        "right_ankle",
-    )
