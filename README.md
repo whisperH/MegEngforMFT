@@ -95,5 +95,13 @@ example:
 ##### 模型检测脚本
 
 ```
+python evaluation/MFT_Run.py
+```
+文件已经为参赛者实现了基本功能（测试集数据列表读取，模型结果数据格式存储等），
+模型运行结果存储到指定文件夹下，参赛者实现模型即可
+
+示例：
+
+```
 python evaluation/MFT_Run_example.py --test_list_path /path/to/test.json --result_save_path ./preliminary_submit
 ```                   
