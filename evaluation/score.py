@@ -5,15 +5,12 @@ import motmetrics as mm
 import numpy as np
 import pandas as pd
 
-# PROJECT_PATH = os.path.abspath(os.path.dirname(__file__))
-# DATA_PATH = os.path.join(PROJECT_PATH, 'data/')
-
 
 class TrackEvaluator(object):
-    def __init__(self, args, data_type='track', maxDist=450, w_MOTA=1, w_IDF1=1):
+    def __init__(self, args, data_type='track', maxDist=450, w_MOTA=0.3, w_IDF1=0.7):
         self.maxDist = maxDist
-        self.data_path = args.data_path
-        self.dataset_type = args.dataset_type
+        # self.dataset_type = args.dataset_type
+        # self.data_path = args.data_path
         self.track_result_path = args.track_result_path
         self.gt_path = args.gt_path
         if self.track_result_path is not None and self.gt_path is not None:
@@ -68,7 +65,7 @@ class TrackEvaluator(object):
 
             save_path = os.path.split(track_)[0]
             try:
-                score = self.MOT_Evaluation(gt_, track_, self.maxDist, save_path)
+                score = self.MOT_Evaluation(gt_, track_, self.maxDist, save_path, freq=5)
             except Exception as e:
                 print(e)
                 score = 0
@@ -82,7 +79,7 @@ class TrackEvaluator(object):
             os.path.join(datapath)
         )
         for file in files:
-            if 's'+frame_fre in file:
+            if 's' + frame_fre in file:
                 eval_datapath.append(
                     os.path.join(
                         datapath,
@@ -115,7 +112,7 @@ class TrackEvaluator(object):
 
     def MOT_Evaluation(
             self, gt_filepath, track_filepath,
-            maxDist, outputDir
+            maxDist, outputDir, freq=1
     ):
         """
 
@@ -140,7 +137,10 @@ class TrackEvaluator(object):
             track_filepath, sep=","
         )
         det_df.columns = ["frame", "id", "bb_left", "bb_top", "bb_right", "bb_bottom", "conf", "cat", "iscrowd"]
-
+        gt_df = gt_df.sort_values(by=["frame", "id"])
+        det_df = det_df.sort_values(by=["frame", "id"])
+        if freq == 5:
+            gt_df['frame'] = (gt_df['frame'] - 1) / 5 + 1
         posFunc = get2Dpos
         distFunc = pairwiseDistance
 
@@ -211,26 +211,38 @@ class TrackEvaluator(object):
         metrics = calcMetrics(acc)
 
         writeMOTtoTXT(metrics, os.path.join(outputDir, "eval_res_{}".format(maxDist)))
-
+        print(metrics["mota"].values[0])
+        print(metrics["idf1"].values[0])
         Score = EvalScore(
             metrics["mota"].values[0],
             metrics["idf1"].values[0],
             self.w_MOTA, self.w_IDF1
         )
+        print(Score)
         return Score
 
-def EvalScore(MOTA, IDF1, w_MOTA, w_IDF1):
-    '''
-    计算 MOTA与IDF1的加权调和平均数
-    :param MOTA:
-    :param IDF1:
-    :param w_MOTA:
-    :param w_IDF1:
-    :return:
-    '''
-    numerator = (MOTA + IDF1) * (w_MOTA + w_IDF1)
-    denominator = (MOTA * w_IDF1) + (IDF1 * w_MOTA)
-    return numerator / denominator
+
+# def EvalScore(MOTA, IDF1, w_MOTA, w_IDF1):
+#     '''
+#     计算 MOTA与IDF1的加权调和平均数
+#     :param MOTA:
+#     :param IDF1:
+#     :param w_MOTA:
+#     :param w_IDF1:
+#     :return:
+#     '''
+#     numerator = (MOTA + IDF1) * (w_MOTA + w_IDF1)
+#     denominator = (MOTA * w_IDF1) + (IDF1 * w_MOTA)
+#     return numerator / denominator
+def EvalScore(MOTA, IDF1, w_MOTA, w_IDF1):  # 计算调和平均数
+    data = [MOTA, IDF1]
+    total=0
+    for i in data:
+        if i==0: #处理包含0的情况
+             return 0
+        total+=1/i
+    return len(data)/total
+
 
 def get2Dpos(df):
     """
@@ -439,67 +451,81 @@ def MTBF(events):
         return (sum(seqs) / len(seqs), sum(seqs) / (len(seqs) + len(null_seqs)))
 
 
-class TestUnit():
-    def __init__(self):
-        pass
-
-    def gtInput(self):
-        scores, scores_5 = TrackEvaluator(data_type='gt').run()
-        print('original dataset get scores:', np.mean(scores))
-        print('selected-5-frames dataset get scores:', np.mean(scores_5))
-
-    def trackInput(self):
-        scores, scores_5 = TrackEvaluator(data_type='track').run()
-        print('original dataset get scores:', np.mean(scores))
-        print('selected-5-frames dataset get scores:', np.mean(scores_5))
-
-    def zeroInput(self):
-        scores, scores_5 = TrackEvaluator(data_type='zero').run()
-        print('original dataset get scores:', np.mean(scores))
-        print('selected-5-frames dataset get scores:', np.mean(scores_5))
-
-    def nofileInput(self):
-        scores, scores_5 = TrackEvaluator(data_type='xxxx').run()
-        print('original dataset get scores:', np.mean(scores))
-        print('selected-5-frames dataset get scores:', np.mean(scores_5))
-
-    def run(self):
-        print("test for zero input")
-        self.zeroInput()
-
-        print("test for no input file")
-        self.nofileInput()
-
-        print("test for gt input")
-        self.gtInput()
-
-        print("test for track input")
-        self.trackInput()
+#
+# class TestUnit():
+#     def __init__(self):
+#         pass
+#
+#     def gtInput(self):
+#         scores, scores_5 = TrackEvaluator(data_type='gt').run()
+#         print('original dataset get scores:', np.mean(scores))
+#         print('selected-5-frames dataset get scores:', np.mean(scores_5))
+#
+#     def trackInput(self):
+#         scores, scores_5 = TrackEvaluator(data_type='track').run()
+#         print('original dataset get scores:', np.mean(scores))
+#         print('selected-5-frames dataset get scores:', np.mean(scores_5))
+#
+#     def zeroInput(self):
+#         scores, scores_5 = TrackEvaluator(data_type='zero').run()
+#         print('original dataset get scores:', np.mean(scores))
+#         print('selected-5-frames dataset get scores:', np.mean(scores_5))
+#
+#     def nofileInput(self):
+#         scores, scores_5 = TrackEvaluator(data_type='xxxx').run()
+#         print('original dataset get scores:', np.mean(scores))
+#         print('selected-5-frames dataset get scores:', np.mean(scores_5))
+#
+#     def run(self):
+#         print("test for zero input")
+#         self.zeroInput()
+#
+#         print("test for no input file")
+#         self.nofileInput()
+#
+#         print("test for gt input")
+#         self.gtInput()
+#
+#         print("test for track input")
+#         self.trackInput()
 
 def make_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--track_result_path",
-        default='/home/huangjinze/code/MegEngTrack/data/submit',
+        # default='/home/huangjinze/code/data/MFTChallenge/preliminary_submit',
+        default='/home/huangjinze/code/MegEngTrack/evaluation/preliminary_submit',
         type=str, help="track_result filepath"
     )
     parser.add_argument(
         "--gt_path",
-        default='/home/huangjinze/code/MegEngTrack/data/interal',
+        default='/home/huangjinze/code/data/MFTChallenge/preliminary_test',
         type=str, help="ground truth filepath"
     )
-    parser.add_argument(
-        "--data_path",
-        default="/home/megstudio/workspace/data/",
-        type=str, help="submit filepath"
-    )
-    parser.add_argument(
-        "--dataset_type",
-        default="preliminary",
-        type=str, help="'intermediary' or 'preliminary'"
-    )
+    # parser.add_argument(
+    #     "--data_path",
+    #     default="/home/megstudio/workspace/data/",
+    #     type=str, help="submit filepath"
+    # )
+    # parser.add_argument(
+    #     "--dataset_type",
+    #     default="preliminary",
+    #     type=str, help="'intermediary' or 'preliminary'"
+    # )
 
     return parser
+
+
+def run():
+    scores, scores_5 = TrackEvaluator(
+        args,
+        data_type='track'
+    ).run()
+    print(scores)
+    print(scores_5)
+    final_score = 0.5 * np.mean(scores) + 0.5 * np.mean(scores_5)
+    return final_score
+
 
 if __name__ == "__main__":
     '''
@@ -508,12 +534,6 @@ if __name__ == "__main__":
     # TestUnit().run()
     parser = make_parser()
     args = parser.parse_args()
-    scores, scores_5 = TrackEvaluator(
-        args,
-        data_type='track'
-    ).run()
-    print('original dataset get scores:', scores)
-    print('original dataset get scores:', np.mean(scores))
-    print('selected-5-frames dataset get scores:', scores_5)
-    print('selected-5-frames dataset get scores:', np.mean(scores_5))
-
+    final_score = run()
+    print(final_score)
+    # print(harmonic_mean( [1, 2, 3, 4, 5, 6,  7, 8, 9, 10]))

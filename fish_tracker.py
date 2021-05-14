@@ -187,9 +187,13 @@ if __name__ == '__main__':
 
     for idata in valdata_list:
         # 不抽帧时跟踪结果的存储路径
+        # track_result_path = os.path.join(
+        #     DATA_PATH, 'train',
+        #     idata['file_name'], 'gt', 'track_1_val_half.txt'
+        # )
+        # 不抽帧时跟踪结果的存储路径
         track_result_path = os.path.join(
-            DATA_PATH, 'train',
-            idata['file_name'], 'gt', 'track_1_val_half.txt'
+            DATA_PATH, idata['file_name'] + '_track_s1_val_half.txt'
         )
         image_file_list = idata['image_list']
         all_track_info = FishTracker.multipleFishTracking(image_file_list)
@@ -197,10 +201,14 @@ if __name__ == '__main__':
             df = pd.DataFrame(all_track_info)
             df.to_csv(track_result_path, index=False, header=False)
 
+        # # 抽5帧时跟踪结果的存储路径
+        # track5_result_path = os.path.join(
+        #     DATA_PATH, 'train',
+        #     idata['file_name'], 'gt', 'track_5_val_half.txt'
+        # )
         # 抽5帧时跟踪结果的存储路径
         track5_result_path = os.path.join(
-            DATA_PATH, 'train',
-            idata['file_name'], 'gt', 'track_5_val_half.txt'
+            DATA_PATH, idata['file_name'] + '_track_s5_val_half.txt'
         )
         image_5file_list = idata['image_5list']
         all_track_info = FishTracker.multipleFishTracking(image_5file_list)

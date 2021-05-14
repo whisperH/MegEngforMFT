@@ -63,7 +63,12 @@
 #### 4. MOT跟踪
 ```fish_tracker.py```
 #### 5. 跟踪指标计算
-```python tracker_eval.py --track_result_path '/path/to/track_result_filepath --gt_path '/path/to/gt_filepath```
+~~python tracker_eval.py --track_result_path '/path/to/track_result_filepath --gt_path '/path/to/gt_filepath~~
+##### 跑分脚本
+- shell 命令
+```python evaluation/score.py --track_result_path /path/to/track_result_filepath --gt_path /path/to/gt_filepath```
+- 函数返回值
+<float> 模型最终评分
 
 ```
 /path/to/
@@ -71,8 +76,8 @@
     |    |{seq_name}_track_s1_test_no1.txt     ：模型跟踪结果（不抽帧的情况）
     |    |{seq_name}_track_s5_test_no1.txt     ：模型跟踪结果（抽帧的情况）
     |->gt_filepath
-    |    |{seq_name}_gt_s1_test+no1.txt        ：真值数据（不抽帧的情况）
-    |    |{seq_name}_gt_s5_test+no1.txt        ：真值数据（抽帧的情况）
+    |    |{seq_name}_gt_s1_test_no1.txt        ：真值数据（不抽帧的情况）
+    |    |{seq_name}_gt_s5_test_no1.txt        ：真值数据（抽帧的情况）
 ```
 
 调和平均比重：w_MOTA=1, w_IDF1=1
@@ -84,6 +89,11 @@ gt:
     
 example:
 
-    original          dataset get scores: 1.596286314214157
-    selected-5-frames dataset get scores: 0.8543985845843052
-                                                            
+    final score: 0.38993150636819063
+
+
+##### 模型检测脚本
+
+```
+python evaluation/MFT_Run_example.py --test_list_path /path/to/test.json --result_save_path ./preliminary_submit
+```                   

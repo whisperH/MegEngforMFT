@@ -3,4 +3,6 @@ detector/log/
 tracker/log/
 *.txt
 *.json
-*.csv
+data/*.csv
+!requirements.txt
+!requirements_megstudio.txt
