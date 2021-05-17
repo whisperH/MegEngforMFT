@@ -212,25 +212,7 @@ class TrackEvaluator(object):
 
         writeMOTtoTXT(metrics, os.path.join(outputDir, "eval_res_{}".format(maxDist)))
 
-        Score = EvalScore(
-            metrics["mota"].values[0],
-            metrics["idf1"].values[0],
-            self.w_MOTA, self.w_IDF1
-        )
-        return Score
 
-def EvalScore(MOTA, IDF1, w_MOTA, w_IDF1):
-    '''
-    计算 MOTA与IDF1的加权调和平均数
-    :param MOTA:
-    :param IDF1:
-    :param w_MOTA:
-    :param w_IDF1:
-    :return:
-    '''
-    numerator = (MOTA + IDF1) * (w_MOTA + w_IDF1)
-    denominator = (MOTA * w_IDF1) + (IDF1 * w_MOTA)
-    return numerator / denominator
 
 def get2Dpos(df):
     """
@@ -508,12 +490,8 @@ if __name__ == "__main__":
     # TestUnit().run()
     parser = make_parser()
     args = parser.parse_args()
-    scores, scores_5 = TrackEvaluator(
+    TrackEvaluator(
         args,
         data_type='track'
     ).run()
-    print('original dataset get scores:', scores)
-    print('original dataset get scores:', np.mean(scores))
-    print('selected-5-frames dataset get scores:', scores_5)
-    print('selected-5-frames dataset get scores:', np.mean(scores_5))
 
